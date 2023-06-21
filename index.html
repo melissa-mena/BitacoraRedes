@@ -1,0 +1,459 @@
+﻿<!DOCTYPE html>
+<html xmlns="https://www.w3.org/1999/xhtml/">
+<head>
+	<title>CallCenter Bitacora</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+	<style>
+    .modal-content img {
+      width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+
+<div id="wrapper-header">
+<div id="header">
+<div id="wrapper-header2">
+<div id="wrapper-header3">
+	<h1> </h1>
+</div><!--wrapper-header3-->
+</div><!--wrapper-header2-->
+</div><!--header-->
+</div><!--wrapper-header-->
+
+<div id="wrapper-content">
+
+	
+	<div id="content">
+	<div style="text-align: center; color:#7AB8BF;">
+	<h1>Universidad de Costa Rica - Call Center</h1>
+	</div>
+   <br></br>
+  <h4>Configuración del servicio de teléfono</h4>
+  <pre>
+    Router(config)#license boot module c2900 technology-package uck9
+    Router#wr
+    Router#reload
+  </pre>
+
+  <h4>Configuración del router en g0/0 con DHCP</h4>
+  <pre>
+    Router>enable
+    Router#conf ter
+    Router(config)#interface g0/0
+    Router(config-if)#ip address 172.16.16.1 255.255.255.0
+    Router(config-if)#no shutdown
+  </pre>
+
+  <h4>Configuración del servidor DHCP en el router</h4>
+  <pre>
+    Router(config)#ip dhcp pool Voice
+    Router(dhcp-config)#
+    Router(dhcp-config)#network 172.16.1.0 255.255.255.0
+    Router(dhcp-config)#default-router 172.16.16.1
+    Router(dhcp-config)#option 150 ip 172.16.16.1
+  </pre>
+
+  <h4>Configuración del switch</h4>
+  <pre>
+    Switch>enable
+    Switch#config
+    Switch(config)#interface range fa0/2-8
+    Switch(config-if-range)#switchport voice vlan 1
+  </pre>
+
+  <h4>Configuración de los teléfonos</h4>
+  <pre>
+    Router(config)#telephony-service
+    Router(config-telephony)#max-dn 7
+    Router(config-telephony)#max-ephones 7
+    Router(config-telephony)#ip source-address 172.16.16.1 port 2000
+    Router(config-telephony)#auto assign 1 to 7
+    Router(config-telephony)#ex
+    Router(config)#ephone-dn 1
+    Router(config-ephone-dn)#number 5221
+    Router(config-ephone-dn)#ex
+    Router(config)#ephone-dn 2
+    Router(config-ephone-dn)#number 5222
+  </pre>
+
+  <h4>Configuración de la conexión serial</h4>
+  <pre>
+    Router(config)#interface Serial0/0/1
+    Router(config-if)#ip address 11.0.0.1 255.0.0.0
+    Router(config-if)#no shutdown
+  </pre>
+
+  <h4>Configuración del router para conexión BGP</h4>
+  <pre>
+    Router(config)#router bgp 200
+    Router(config-router)#network 11.0.0.0 mask 255.0.0.0
+    Router(config-router)#network 12.0.0.0 mask 255.0.0.0
+    Router(config-router)#neighbor 11.0.0.2 remote-as 300
+    Router(config-router)#neighbor 12.0.0.1 remote-as 100
+    Router(config-router)#exit
+  </pre>
+
+  <h4>Configuración de la máquina virtual</h4>
+   <pre>
+	  <ol>
+		<li>Desactivar el WiFi de la máquina host</li>
+		<li>En la configuración de la máquina virtual, en la sección de red, cambiar el adaptador 1 a<br>"adaptador puente" y 
+		   seleccionar el nombre correspondiente al cable conectado al switch.</li>
+		<li>Configurar la entrada en la máquina Ubuntu-Desktop y seleccionar DHCP.</li>
+	  </ol>
+	</pre>
+  <h4>Configuración en Packet Tracer</h4>
+	<pre>
+		<p>Asegúrese de replicar las configuraciones en Packet Tracer según las instrucciones proporcionadas.</p>
+  </pre>
+  
+  <h4>Configuración de extensión teléfonos en freePBX</h4>
+  <pre>
+	<li>Paso 1: Login FreePBX </li>
+		admini
+		1234
+	<li>Paso 2: Agregar Extensión</li>
+		Aplications > Extensions > Add Extensions > Add New SIP ( chan_pjsip ) 
+		 En la pestaña General --> Agregar user Extension, un nombre y una contraseña y guardamos configuración en "Submit"
+		 y despúes en Apply Config
+	<li>Paso 3: Comprobar en ZoiPer</li>
+	   Digitamos el número de extensión seguido de la IP estática asignada a freePBX 172.16.16.100  --> extensión@172.16.16.100 
+	   Digitamos la contraseña asignada a esa extensión
+	   En la siguiente ventana, verificamos que esté la IP seguido del puerto por defecto 5060 y seleccionar next
+	   En la ventana donde se prueban las posibles configuraciones, seleccionar la opción  SIP UDP y verificar que esté en verde > next
+	
+  </pre>
+  
+  <h4>Configuración SIP TRUNK en freePBX</h4>
+  <pre>
+	<li>Paso 1: Login FreePBX como administrados </li>
+		admini
+		1234
+	<li>Paso 2:</li>
+		Connectivity > Trunks > Add Trunk > Add SIP ( chan_pjsip ) Trunk 
+		 En la pestaña General --> Agregar el nombre del TRUNK "TRUNK"
+		 En la pestaña Dialed Number Manipulation Rules --> Agreagar un prefijo de 9 digitos para la llamada "0XXXXXXXXX" 
+		 que significa 0123456789 y otro prefijo pero de 8 "0XXXXXXXX" 
+		 En la pestaña pjsip Settings --> en general --> selccionar none en authentication
+		 Asignar un SIP server : 172.16.16.100 y un SIP server port 5060
+		 Después submit y apply Config
+	<li>Paso 3: Verificar Configuración</li>
+	   Report > Asterisk info 
+	   
+	<li>Paso 4: Crear Outbound route</li>
+	   Connectivity > Outbound routes > +Add Outbound routes
+	   En la pestaña Route settings: agregamos un route name, un route cid y en Trunk sequence for matched routes se y escogemos el
+	   nombre del trunk creado anteriormente.
+	   En la pestaña Dial Patterns: añadimos el prefijo.
+	   
+	  Ckick en submit > apply config
+  </pre>
+  
+   <h4>Configuración del servidor web Apache en Linux, Ubuntu</h4>
+  <pre>
+	<li>Paso 1: Instalar Apache</li>
+		sudo apt update
+		sudo apt install apache2
+	<li>Paso 2: Configurar el firewall</li>
+		sudo ufw allow 'Apache'
+		sudo ufw enable
+	<li>Paso 3: Comprobar el estado de Apache</li>
+	   Una vez instalado Apache, puedes verificar si está funcionando correctamente ingresando la dirección IP 
+	   del servidor en tu navegador web. Deberías ver la página de inicio de Apache si todo está configurado correctamente.
+	<li>Paso 4: Comandos para administrar el servicio Apache</li>
+		sudo systemctl start apache2
+		sudo systemctl stop apache2
+		sudo systemctl restart apache2
+		sudo systemctl status apache2
+	<li>Paso 5: Configurar sitios virtuales</li>
+		Apache te permite configurar sitios virtuales para alojar múltiples sitios web en el mismo servidor. Por defecto, Ubuntu crea 
+		un sitio virtual llamado "000-default.conf". Puedes editar este archivo o crear nuevos archivos de configuración en el directorio 
+		/etc/apache2/sites-available/.
+		Para crear un nuevo sitio virtual, puedes copiar el archivo de configuración predeterminado:
+		sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/index.conf
+		Después de hacer los cambios, activa el sitio virtual ejecutando el siguiente comando:
+		sudo a2ensite mi-sitio.conf
+		Finalmente, reinicia Apache para que los cambios surtan efecto:
+		sudo systemctl restart apache2
+	 <li>Paso 6: Administrar los archivos del sitio web</li>
+		Por defecto, los archivos del sitio web se almacenan en el directorio /var/www/html/. Puedes colocar tus archivos HTML, CSS, 
+		JavaScript y otros recursosen esta ubicación.
+	 <li>Paso 7: Acceder al sitio web</li>
+		Por dirección ip del servidor:
+		Desde el propio servidor: http://localhost o http://127.0.0.1.
+	
+  </pre>
+  
+   <h4>Configuración del servidor DNS</h4>
+  <pre>
+	<li>Paso 1:</li>
+		Primero debes generar un archivo de zona. Este es el archivo que almacena el nombre de dominio y su correspondiente 
+		dirección IP. Para generar un archivo de zona, debes crear un archivo con el siguiente formato de nombre de archivo: 
+		[nombre de dominio en orden inverso].zone
+		Se proporciona un ejemplo de archivo de zona en el proyecto. Simplemente puedes copiar los detalles y cambiar los campos relevantes según tus propias 
+		asignaciones. En particular, deberás cambiar los dominios en los siguientes campos:
+		'$origin'
+		'mname'
+		'rname'
+		'ns'
+	<li>Paso 2: </li>
+		Una vez que se haya creado el archivo de zona y se haya colocado en el directorio 'Zones', puedes iniciar el servidor. 
+		No se necesitan modificaciones especiales para ejecutar el servidor. Simplemente ejecuta el archivo 'Server.py'. 
+		Asegúrate de ejecutar 'Server.py' con los privilegios necesarios para que el programa pueda acceder a los recursos de red.
+		Nota: El servidor utiliza el puerto predeterminado del servidor DNS (53). Asegúrate de que ningún otro proceso esté utilizando el
+		puerto 53, de lo contrario, el servidor no podrá ejecutarse.
+		Ahora puedes cambiar las configuraciones de red en varias máquinas que necesiten utilizar este servidor DNS, especificando 
+		la dirección IP de la máquina donde se ejecuta el servidor DNS.
+
+	<li>Paso 3: Run</li>
+		Para ver un ejemplo de ejecución, puedes utilizar el comando 'dig' en Linux para ver la respuesta que proporciona el servidor.
+
+		Inicia el servidor y asegúrate de que esté en funcionamiento antes de continuar.
+		Abre una terminal y usa el siguiente comando:
+		$ dig xyz.com @127.0.0.1
+		Deberías recibir una respuesta para el dominio xyz.com. Una vez que hayas configurado tu propio archivo de zona, puedes reemplazar 
+		'xyz.com' con tu propio nombre de dominio. Puedes cambiar la dirección IP '127.0.0.1' por la dirección IP donde se esté ejecutando 
+		el servidor DNS cuando lo tengas en funcionamiento en una máquina remota en la red.
+
+		Nota: Si has actualizado tus configuraciones de red para utilizar una IP específica para el servidor DNS, entonces no es necesario 
+		incluir la parte '@127.0.0.1' en el comando.
+
+	<li>Paso 4:</li>
+		Ejecutar pruebas:
+		Si realizas modificaciones en el código, puedes ejecutar pruebas navegando hasta el directorio del proyecto (es decir, 'DNS Server') y 
+		luego ejecuta el siguiente comando:
+		$ python3 -m unittest
+	</pre>
+	
+	<h4>Diagramas</h4>
+   
+	  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal">Call Center</button>
+	  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModalGrupal">Todas las organizaciones</button>
+
+ </div><!--content-->
+</div><!--wrapper-content-->
+<!-- Modal Grupal-->
+  <div id="myModalGrupal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+      <!-- Contenido del modal -->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <img src="https://i.postimg.cc/GhwLM6yk/diagrama.jpg" alt="Diagrama General">
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal Call center-->
+  <div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+      <!-- Contenido del modal -->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <img src="https://i.postimg.cc/GhwLM6yk/diagrama.jpg" alt="Diagrama call center">
+        </div>
+      </div>
+    </div>
+  </div>
+<div id="wrapper-footer">
+		<div id="footer">
+			<br>
+			<p style="color:black;">&#169; <a href="" style="color:white">IF5100</a><a href="" style="color:white"> - REDES Y COMUNICACIONES DE DATOS <br> </a> 
+			PROYECTO DE INVESTIGACIÓN <a href="" style="color:white"></a> | <script type="text/javascript">document.write(new Date().getFullYear());</script> <br>
+			<a href="#" style="color:white" data-toggle="modal" data-target="#integrantesModal">INTEGRANTES</a>
+		</div><!--footer-->
+	</div><!--wrapper-footer-->
+
+	<!-- Modal -->
+	<div class="modal fade" id="integrantesModal" tabindex="-1" role="dialog" aria-labelledby="integrantesModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h1 class="modal-title" id="integrantesModalLabel">Integrantes | Grupo B</h1>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body" style="text-align: left; font-size: 12px">
+					<ul>
+						<li>Melissa Mena Calderón - B94732</li>
+						<li>Angélica Cordero Durán - B9</li>
+						<li>Angie Mora Núñez - B95185</li>
+						<li>María Celeste Montoya Bonilla - C14999</li>
+						<li>Yisack Ramirez Quirós - B9</li>
+					</ul>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+
+
+
+<style>
+body {
+	font-family: trebuchet ms, verdana, arial, tahoma;
+	font-size: 90%;
+	color: #888;
+	background-color: white;
+	line-height: 180%;
+	margin: 0;
+	padding: 0;
+	text-align: center;
+}
+
+
+#menu-top, #header, #wrapper-content, #wrapper-footer {
+	width: 100%;
+	margin: 0 auto;
+	text-align: left;
+}
+
+#menu-top {
+	background: white url('images/bg02-white-right.png') no-repeat right top;
+	overflow: hidden;
+}
+
+#menu-top ul {
+	background: transparent url('images/bg02-white-left.png') no-repeat left top;
+	margin:0;
+	padding: 1em 0 0 0;
+	list-style: none;
+	font-size: 85%;
+	float: left;
+	padding-left: 20px;
+}
+
+#menu-top li {
+	display: inline;
+	float: left;
+}
+
+#menu-top a {
+	float: left;
+	background:url(images/menuleft.png) no-repeat left top;
+	margin:0;
+	padding:0 0 0 4px;
+	text-decoration:none;
+	line-height: 1.5em;
+}
+
+#menu-top a span {
+	background: transparent url(images/menuright.png) no-repeat right top;
+	padding:5px 15px 4px 6px;
+	color:#5b8fbe;
+	display: block;
+	float: left;
+	cursor: pointer; /* IE doesnt display the hand when you roll over the link for some reason. This fixes it */
+}
+
+#menu-top a:hover { background-position:0% -42px; }
+#menu-top a:hover span {	background-position:100% -42px; }
+
+#wrapper-header {	background: transparent url('images/bg.png') top center repeat-x; }
+
+#header {
+  background: #eee url(https://www.itmonteur.net/wp-content/uploads/2016/06/networking-banner.jpg) no-repeat center top;
+  background-size: cover;
+  width: 100%;
+}
+#wrapper-header2 { background: transparent url('images/bg02-blue-left.png') top left no-repeat; }
+
+#wrapper-header3 { background: transparent url('images/bg02-blue-right.png') top right no-repeat; }
+
+#header h1 {
+	margin: 0 20px;
+	padding: 0;
+	height: 192px;
+	line-height: 3em;
+	color: #ccc;
+	font-size: 130%;
+}
+
+#wrapper-content { background: white url('images/bg02-white-left.png') no-repeat left top; }
+
+* html #wrapper-content { height: 1%; }
+
+#content {
+	background: transparent url('images/bg02-white-right.png') no-repeat right top;
+	padding: 5px 245px 5px 40px;
+   margin-left: 220px; 
+}
+
+#wrapper-menu-page {
+	float: right;
+	width:180px;
+	margin: 20px 30px 3em 2em;
+	background: transparent url('images/menu.png') no-repeat;
+	text-align: center;
+	line-height: 140%;
+	font-family:"Lucida Grande","Lucida Sans Unicode",arial,sans-serif;
+}
+
+* html #wrapper-menu-page { margin-right: 15px; }
+
+#menu-page { padding-top: 5px; }
+
+#menu-page ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: 90%;
+}
+
+#menu-page h3 {
+	font-size: 75%;
+	text-transform: uppercase;
+	margin: 1em 0 0.3em 0;
+	color: #5b8fbe;
+	font-weight: normal;
+	letter-spacing: 0.15em;
+}
+
+#menu-page a:link, #menu-page a:visited { color: #888; }
+#menu-page a:hover { color: #5b8fbe; }
+
+#wrapper-footer {
+	margin-top: 1em;
+	text-align: center;
+}
+
+#footer {
+  margin: 0 auto; 
+  width: 100%; 
+  height: 95px; /* Ajusta la altura del footer a 100px */
+  font-size: 13px; /* Ajusta el tamaño de letra del footer a 16px */
+  background-color: #7AB8BF;
+  border: 1px solid #ccc;
+  border-bottom: 0;
+  clear: both;
+  text-align: center; 
+}
+
+h2 { font-size: 110%; }
+h3 { font-size: 100%; }
+
+a:link, a:visited { color: #5b8fbe; text-decoration: none; }
+a:hover{ color: #666; text-decoration: none; }
+</style>
+
+</html>
+
